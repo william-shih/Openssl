@@ -14,6 +14,18 @@ void load_pri_key(const char *path, EVP_PKEY **key){
     fclose(rsa_key_file);
 }
 
+void load_der_pri_key(const char *path, EVP_PKEY **key){
+    unsigned char *buf;
+    int key_len = 0;
+
+    readfile(path, &buf, &key_len);
+    BIO *keyBio = BIO_new_mem_buf(buf, key_len);
+    *key = d2i_PrivateKey_bio(keyBio, NULL);
+
+    BIO_free_all(keyBio);
+    free(buf);
+}
+
 int envelope_open(EVP_PKEY *priv_key, unsigned char *ciphertext, int ciphertext_len,
 	unsigned char *encrypted_key, int encrypted_key_len, unsigned char *iv,
 	unsigned char *plaintext)
@@ -57,7 +69,8 @@ int envelope_open(EVP_PKEY *priv_key, unsigned char *ciphertext, int ciphertext_
 int Decrypt(unsigned char* ctx, const int len, unsigned char **dec){
   int dec_len = 0;
   EVP_PKEY* privkey = NULL;
-  load_pri_key("private.key", &privkey);
+  //load_pri_key("private.key", &privkey);
+  load_der_pri_key("der_private.key", &privkey);
   int ekSize, ivSize;
   unsigned char* ek, *iv;
 
