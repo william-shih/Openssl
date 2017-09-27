@@ -16,7 +16,7 @@ void load_pub_key(const char *path, EVP_PKEY **key) {
     }
 }
 
-void load_der_pub_key(const char *path, EVP_PKEY **key) {
+void load_bio_der_pub_key(const char *path, EVP_PKEY **key) {
     unsigned char *buf;
     int key_len = 0;
 
@@ -26,6 +26,14 @@ void load_der_pub_key(const char *path, EVP_PKEY **key) {
 
     BIO_free_all(keyBio);
     free(buf);
+}
+
+void load_der_pub_key(const char *path, EVP_PKEY **key){
+    FILE *fp = fopen(path, "r");
+    rewind(fp);
+    *key = (EVP_PKEY*)(intptr_t)d2i_PUBKEY_fp(fp, NULL); // pointer size are different, so must use "intptr_t" cast
+
+    fclose(fp);
 }
 
 int envelope_seal(EVP_PKEY **pub_key, unsigned char *plaintext, int plaintext_len,
@@ -74,6 +82,7 @@ int Encrypt(unsigned char* pxt, const int len, unsigned char** enc){
     EVP_PKEY* pubkey = NULL;
 
 //    load_pub_key("public.key", &pubkey); // load pem key
+//    load_bio_der_pub_key("der_public.key", &pubkey); // load der key by bio
     load_der_pub_key("der_public.key", &pubkey); // load der key
     int ivSize = EVP_MAX_IV_LENGTH, ekSize = EVP_PKEY_size(pubkey);
     unsigned char *ek = malloc(ekSize), *iv = malloc(ivSize);
